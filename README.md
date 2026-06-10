@@ -105,7 +105,7 @@ LexLocal gives attorneys a private research assistant that can:
 - **[Ollama](https://ollama.com/download)** installed and running
 - Two Ollama models pulled (see Quick Start below):
   - `nomic-embed-text` — for document embedding
-  - `llama3.3:70b` — for chat and summarization (or any other supported model)
+  - `gpt-oss:latest` — for chat and summarization (or any other supported model)
 - **Hardware**: 16 GB RAM minimum; 32 GB recommended. Apple Silicon (M1/M2/M3) or an NVIDIA GPU significantly improves response times. The `llama3.3:70b` model requires approximately 43 GB of disk space.
 
 ---
