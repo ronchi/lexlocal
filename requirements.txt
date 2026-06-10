@@ -1,0 +1,31 @@
+# Core RAG
+llama-index>=0.10.0
+llama-index-core>=0.10.0
+llama-index-llms-ollama>=0.1.0
+llama-index-embeddings-ollama>=0.1.0
+llama-index-vector-stores-lancedb>=0.1.0
+llama-index-readers-file>=0.1.0
+
+# LangChain + LangGraph agent layer
+langchain>=0.2.0
+langchain-ollama>=0.1.0
+langchain-community>=0.2.0
+langgraph>=0.1.0
+
+# Vector store
+lancedb>=0.6.0
+
+# Document ingestion
+docling>=1.0.0
+python-docx>=1.0.0
+openpyxl>=3.1.0
+odfpy>=1.4.0
+pymupdf>=1.23.0        # fast native-text extraction from PDFs
+easyocr>=1.7.0         # better OCR fallback for scanned PDFs
+
+# UI
+gradio>=4.0.0
+
+# Utilities
+httpx>=0.25.0
+pydantic>=2.0.0
