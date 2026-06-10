@@ -118,7 +118,7 @@ Download Ollama from [https://ollama.com/download](https://ollama.com/download),
 
 ```bash
 ollama pull nomic-embed-text
-ollama pull llama3.3:70b
+ollama pull gpt-oss:latest
 ```
 
 > **Tip:** If disk space is limited, `mistral` (4.1 GB) or `llama3.2:3b` (2 GB) can be substituted for `llama3.3:70b`. They are less capable for complex legal work but run on modest hardware.
