@@ -697,13 +697,41 @@ def build_ui(lan_mode: bool = False) -> gr.Blocks:
             inputs=[chat_model_dd, ollama_url, embed_model_box, cl_token],
         )
 
+        def _get_lan_ip() -> str:
+            """Return the machine's LAN IP address.
+
+            Uses a UDP-connect trick: connecting a datagram socket to an
+            external address causes the OS to select the outbound interface
+            without actually sending any packets.  This reliably returns the
+            real LAN IP even on Linux systems where /etc/hosts maps the
+            hostname to 127.0.1.1.
+            """
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))   # no packets sent
+                    return s.getsockname()[0]
+            except Exception:
+                pass
+            # Fallback: iterate interface addresses and return the first
+            # non-loopback IPv4 address found.
+            try:
+                for info in socket.getaddrinfo(socket.gethostname(), None,
+                                               socket.AF_INET):
+                    addr = info[4][0]
+                    if not addr.startswith("127."):
+                        return addr
+            except Exception:
+                pass
+            # Last resort — may return 127.x on some systems but better than crashing.
+            return socket.gethostbyname(socket.gethostname())
+
         def _get_urls():
             local = ""
             if _demo_ref is not None:
                 local = getattr(_demo_ref, "local_url", "") or ""
             if not local:
                 try:
-                    ip   = socket.gethostbyname(socket.gethostname())
+                    ip   = _get_lan_ip()
                     port = (
                         getattr(_demo_ref, "server_port", None)
                         or getattr(_demo_ref, "port", None)
