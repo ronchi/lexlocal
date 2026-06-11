@@ -20,10 +20,12 @@ This application is distributed under the MIT license.
 ======================================================================
 """
 
+import os
 import sys
 import json
 import queue
 import socket
+import platform
 import subprocess
 import threading
 from pathlib import Path
@@ -35,24 +37,63 @@ import httpx
 _demo_ref: gr.Blocks | None = None
 
 
+def _display_env() -> dict:
+    """
+    Build an environment dict for tkinter subprocesses.
+
+    On Linux the subprocess must inherit DISPLAY / XAUTHORITY (X11) or
+    WAYLAND_DISPLAY so that tkinter can connect to the graphical session.
+    We pass the full current environment and ensure those keys are present.
+    """
+    env = os.environ.copy()
+    # Ensure X11 / Wayland keys propagate (they may be absent on a headless
+    # server, in which case tkinter will fail — see _has_display()).
+    for key in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR"):
+        if key in os.environ:
+            env[key] = os.environ[key]
+    return env
+
+
+def _has_display() -> bool:
+    """Return True if a graphical display appears to be available."""
+    if platform.system() in ("Darwin", "Windows"):
+        return True
+    # Linux / other POSIX: need X11 or Wayland
+    return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
+
 def _pick_folder() -> str:
     """
     Open a native OS folder-picker dialog and return the chosen path.
 
     Runs tkinter in a subprocess so it gets its own main thread — required
     on macOS (and avoids any Gradio thread-safety issues on all platforms).
-    Returns an empty string if the user cancels.
+    Returns an empty string if the user cancels or no display is available.
     """
+    if not _has_display():
+        return ""
+
+    # The focus/topmost dance is macOS-specific.  On Linux the same sequence
+    # can crash some window managers (especially under Wayland), so we use a
+    # simpler approach there.
+    if platform.system() == "Darwin":
+        focus_lines = (
+            "root.wm_attributes('-topmost', True);"
+            "root.deiconify();"
+            "root.lift();"
+            "root.focus_force();"
+            "root.update();"
+            "root.withdraw();"
+        )
+    else:
+        # Linux / Windows: just withdraw immediately; the dialog raises itself.
+        focus_lines = "root.withdraw();"
+
     script = (
         "import tkinter as tk;"
         "from tkinter import filedialog;"
         "root = tk.Tk();"
-        "root.wm_attributes('-topmost', True);"
-        "root.deiconify();"        # briefly visible so macOS grants focus
-        "root.lift();"
-        "root.focus_force();"
-        "root.update();"
-        "root.withdraw();"         # now hide it — dialog inherits topmost
+        + focus_lines +
         "path = filedialog.askdirectory(parent=root, title='Select Knowledge Base Folder');"
         "root.destroy();"
         "print(path, end='')"
@@ -61,6 +102,7 @@ def _pick_folder() -> str:
         result = subprocess.run(
             [sys.executable, "-c", script],
             capture_output=True, text=True, timeout=120,
+            env=_display_env(),
         )
         return result.stdout.strip()
     except Exception:
@@ -70,19 +112,29 @@ def _pick_folder() -> str:
 def _pick_file() -> str:
     """
     Open a native OS file-picker dialog restricted to supported document types.
-    Runs in a subprocess for the same reason as _pick_folder (macOS main-thread
-    restriction).  Returns the chosen path, or an empty string on cancel.
+    Runs in a subprocess for the same reason as _pick_folder.
+    Returns the chosen path, or an empty string on cancel / no display.
     """
+    if not _has_display():
+        return ""
+
+    if platform.system() == "Darwin":
+        focus_lines = (
+            "root.wm_attributes('-topmost', True);"
+            "root.deiconify();"
+            "root.lift();"
+            "root.focus_force();"
+            "root.update();"
+            "root.withdraw();"
+        )
+    else:
+        focus_lines = "root.withdraw();"
+
     script = (
         "import tkinter as tk;"
         "from tkinter import filedialog;"
         "root = tk.Tk();"
-        "root.wm_attributes('-topmost', True);"
-        "root.deiconify();"        # briefly visible so macOS grants focus
-        "root.lift();"
-        "root.focus_force();"
-        "root.update();"
-        "root.withdraw();"         # now hide it — dialog inherits topmost
+        + focus_lines +
         "path = filedialog.askopenfilename("
         "    parent=root,"
         "    title='Select Document to Summarize',"
@@ -103,6 +155,7 @@ def _pick_file() -> str:
         result = subprocess.run(
             [sys.executable, "-c", script],
             capture_output=True, text=True, timeout=120,
+            env=_display_env(),
         )
         return result.stdout.strip()
     except Exception:

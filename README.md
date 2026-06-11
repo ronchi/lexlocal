@@ -112,6 +112,14 @@ LexLocal gives attorneys a private research assistant that can:
 
 ## Quick Start
 
+### 0. For Linux Mint users (and maybe others)
+
+Check to ensure that Python's Tkinter module is installed
+
+```bash
+sudo apt install python3-tk
+```
+
 ### 1. Install Ollama and pull the required models
 
 Download Ollama from [https://ollama.com/download](https://ollama.com/download), install it, then run:
