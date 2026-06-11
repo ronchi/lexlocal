@@ -112,9 +112,9 @@ LexLocal gives attorneys a private research assistant that can:
 
 ## Quick Start
 
-### 0. For Linux Mint users (and maybe others)
+### 0. For Linux users
 
-Check to ensure that Python's Tkinter module is installed
+Ensure that Python's Tkinter module is installed.
 
 ```bash
 sudo apt install python3-tk
